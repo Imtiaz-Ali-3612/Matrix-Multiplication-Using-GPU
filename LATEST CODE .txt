@@ -1,0 +1,177 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
+
+#define BLOCK_SIZE  16
+
+__global__ void gpu_matrix_mult(int *a, int *b, int *c, int m, int n, int k)
+{
+	int row = blockIdx.y * blockDim.y + threadIdx.y;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
+	int sum = 0;
+	if (row < m)
+	{
+		if(col < k) {
+				for (int i = 0; i < n; i++)
+				{
+					sum += a[row * n + i] * b[i * k + col];
+				}
+				c[row * k + col] = sum;
+		}
+	}
+}
+
+void cpu_matrix_mult(int *h_a, int *h_b, int *h_result, int m, int n, int k) {
+	for (int i = 0; i < m; ++i)
+	{
+		for (int j = 0; j < k; ++j)
+		{
+			int tmp = 0.0;
+			for (int h = 0; h < n; ++h)
+			{
+				tmp += h_a[i * n + h] * h_b[h * k + j];
+			}
+			h_result[i * k + j] = tmp;
+		}
+	}
+}
+void DisplayMatrix(int * h_a , int m,int n)
+{
+printf("\n");
+	for (int i = 0; i < m; ++i)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			printf("%d  ", h_a[i*n + j]);
+		}
+
+		printf("\n");
+	}
+printf("\n");
+}
+
+int main(int argc, char const *argv[])
+{
+
+
+	FILE *myFile_mnk;
+    myFile_mnk = fopen("C:\\Users\\k1636\\Documents\\Visual Studio 2010\\Projects\\abc\\abc\\mnk.txt", "r");
+
+    
+    int i,j;
+	int m,n,k;
+	fscanf(myFile_mnk, "%d", &m);
+	fscanf(myFile_mnk, "%d", &n);
+	fscanf(myFile_mnk, "%d", &k);
+	fclose(myFile_mnk);
+	printf("%d %d %d",m,n,k);
+	
+	
+	// allocate memory in host RAM, h_cc is used to store CPU result
+	int *h_a, *h_b, *h_c, *h_cc;
+	cudaMallocHost((void **)&h_a, sizeof(int)*m*n);
+	cudaMallocHost((void **)&h_b, sizeof(int)*n*k);
+	cudaMallocHost((void **)&h_c, sizeof(int)*m*k);
+	cudaMallocHost((void **)&h_cc, sizeof(int)*m*k);
+
+	// Allocate memory space on the device 
+	int *d_a, *d_b, *d_c;
+	cudaMalloc((void **)&d_a, sizeof(int)*m*n);
+	cudaMalloc((void **)&d_b, sizeof(int)*n*k);
+	cudaMalloc((void **)&d_c, sizeof(int)*m*k);
+
+
+//Input Matrices From file
+ FILE *myFile_input1;
+    myFile_input1 = fopen("C:\\Users\\k1636\\Documents\\Visual Studio 2010\\Projects\\abc\\abc\\input1.txt", "r");
+    for (i = 0; i < m; i++)
+    {	
+    	for(j=0;j<n;j++){
+		fscanf(myFile_input1, "%d", &h_a[i*n+j]);
+		
+		}
+        
+    }
+    fclose(myFile_input1);
+    FILE *myFile_input2;
+    myFile_input2 = fopen("C:\\Users\\k1636\\Documents\\Visual Studio 2010\\Projects\\abc\\abc\\input2.txt", "r");
+    for (i = 0; i < n; i++)
+    {	
+    	for(j=0;j<k;j++){
+		fscanf(myFile_input2, "%d", &h_b[i*k+j]);
+		
+		}
+        
+    }
+    fclose(myFile_input2);
+
+	DisplayMatrix(h_a,m,n);
+	DisplayMatrix(h_b,n,k);
+	
+
+	float gpu_elapsed_time_ms, cpu_elapsed_time_ms;
+
+	// some events to count the execution time
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	// start to count execution time of GPU version
+cudaEventRecord(start, 0);
+
+	// copy matrix A and B from host to device memory
+	cudaMemcpy(d_a, h_a, sizeof(int)*m*n, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_b, h_b, sizeof(int)*n*k, cudaMemcpyHostToDevice);
+
+
+
+	  dim3 dimGrid ((k + BLOCK_SIZE - 1) / BLOCK_SIZE, (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
+	  dim3 dimBlock (BLOCK_SIZE, BLOCK_SIZE);
+	
+	// Launch kernel 
+	  gpu_matrix_mult << <dimGrid, dimBlock >> >(d_a, d_b, d_c, m, n, k);
+
+	// Transefr results from device to host 
+
+	cudaMemcpy(h_c, d_c, sizeof(int)*m*k, cudaMemcpyDeviceToHost);
+
+		cudaThreadSynchronize();
+
+	// time counting terminate
+cudaEventRecord(stop, 0);
+
+cudaEventSynchronize(stop);
+
+	// compute time elapse on GPU computing
+cudaEventElapsedTime(&gpu_elapsed_time_ms, start, stop);
+	printf("Time elapsed on matrix multiplication of %dx%d . %dx%d on GPU: %f ms.\n\n", m, n, n, k, gpu_elapsed_time_ms);
+
+	// start the CPU version
+cudaEventRecord(start, 0);
+
+	cpu_matrix_mult(h_a, h_b, h_cc, m, n, k);
+
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&cpu_elapsed_time_ms, start, stop);
+	printf("Time elapsed on matrix multiplication of %dx%d . %dx%d on CPU: %f ms.\n\n", m, n, n, k, cpu_elapsed_time_ms);
+
+	// validate results computed by GPU
+printf("\nGPU\n");
+DisplayMatrix(h_cc,m,k);
+printf("\nCPU\n");
+DisplayMatrix(h_c,m,k);
+	
+	system("pause");
+
+	// free memory
+	cudaFree(d_a);
+	cudaFree(d_b);
+	cudaFree(d_c);
+	cudaFreeHost(h_a);
+	cudaFreeHost(h_b);
+	cudaFreeHost(h_c);
+	cudaFreeHost(h_cc);
+	return 0;
+}

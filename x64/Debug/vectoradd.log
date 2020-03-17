@@ -1,0 +1,11 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (vectoradd.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Compiling CUDA source file kernel.cu...
+  
+  c:\Users\k1636\documents\visual studio 2017\Projects\vectoradd\vectoradd>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\bin\nvcc.exe" -gencode=arch=compute_35,code=\"sm_35,compute_35\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.10.25017\bin\HostX86\x64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /Fdx64\Debug\vc141.pdb /FS /Zi /RTC1 /MDd " -o x64\Debug\kernel.cu.obj "c:\Users\k1636\documents\visual studio 2017\Projects\vectoradd\vectoradd\kernel.cu" 
+  kernel.cu
+c:/Users/k1636/documents/visual studio 2017/Projects/vectoradd/vectoradd/kernel.cu(148): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:/Users/k1636/documents/visual studio 2017/Projects/vectoradd/vectoradd/kernel.cu(241): warning C4996: 'cudaThreadSynchronize': was declared deprecated
+  c:\program files\nvidia gpu computing toolkit\cuda\v10.0\include\cuda_runtime_api.h(947): note: see declaration of 'cudaThreadSynchronize'
+     Creating library c:\users\k1636\documents\visual studio 2017\Projects\vectoradd\x64\Debug\Matrix Multiplication With Cuda.lib and object c:\users\k1636\documents\visual studio 2017\Projects\vectoradd\x64\Debug\Matrix Multiplication With Cuda.exp
+  vectoradd.vcxproj -> c:\users\k1636\documents\visual studio 2017\Projects\vectoradd\x64\Debug\Matrix Multiplication With Cuda.exe
+  vectoradd.vcxproj -> c:\users\k1636\documents\visual studio 2017\Projects\vectoradd\x64\Debug\Matrix Multiplication With Cuda.pdb (Partial PDB)
